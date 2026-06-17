@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api-ai/:path*",
+      "destination": "https://v1.iyhapi.app/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
