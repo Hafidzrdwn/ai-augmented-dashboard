@@ -2,11 +2,17 @@ import { useState, useEffect } from 'react';
 import { COLOR, FONT } from '../../styles/tokens';
 import { getChartInsight, generateDynamicTitle } from '../../services/aiService';
 import { useStreamingText } from '../../hooks/useStreamingText';
+import { useDashboard } from '../../context/DashboardContext';
+import { parseMarkdownToReact } from '../../utils/dataUtils';
 
 export default function ChartCard({ title: fallbackTitle, subtitle, chartId, chartData, children }) {
+  const { regionFilter, zScoreThreshold, momThreshold } = useDashboard();
+  const activeFilters = { region: regionFilter, zScore: zScoreThreshold, mom: momThreshold };
+
   const [aiTitle, setAiTitle] = useState(null);
 
   const dataString = chartData ? JSON.stringify(chartData) : '';
+  const filtersString = JSON.stringify(activeFilters);
 
   useEffect(() => {
     if (!chartData || !dataString) return;
@@ -14,6 +20,7 @@ export default function ChartCard({ title: fallbackTitle, subtitle, chartId, cha
     generateDynamicTitle(
       chartData,
       chartId,
+      activeFilters,
       function onComplete(generatedTitle) {
         const cleaned = generatedTitle.replace(/^["']+|["']+$/g, '').trim();
         if (cleaned.length > 5) {
@@ -21,7 +28,7 @@ export default function ChartCard({ title: fallbackTitle, subtitle, chartId, cha
         }
       },
     );
-  }, [dataString, chartId]);
+  }, [dataString, chartId, filtersString]);
 
   const displayTitle = aiTitle || fallbackTitle;
 
@@ -36,7 +43,7 @@ export default function ChartCard({ title: fallbackTitle, subtitle, chartId, cha
     }
     setShowInsight(true);
     startStream();
-    await getChartInsight(chartData, displayTitle, onChunk, onComplete, onError);
+    await getChartInsight(chartData, displayTitle, activeFilters, onChunk, onComplete, onError);
   }
 
   return (
@@ -146,7 +153,7 @@ export default function ChartCard({ title: fallbackTitle, subtitle, chartId, cha
               {error}
             </p>
           ) : text ? (
-            <p
+            <div
               style={{
                 color:      COLOR.textSecondary,
                 fontSize:   '12px',
@@ -156,8 +163,8 @@ export default function ChartCard({ title: fallbackTitle, subtitle, chartId, cha
               }}
               className={isStreaming ? 'cursor-blink' : ''}
             >
-              {text}
-            </p>
+              {parseMarkdownToReact(text)}
+            </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 0' }}>
               <span style={{ fontSize: '11px', color: COLOR.textMuted, fontStyle: 'italic', fontFamily: FONT.sans }}>AI sedang menganalisis data grafik</span>

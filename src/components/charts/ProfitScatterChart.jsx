@@ -112,7 +112,7 @@ export default function ProfitScatterChart({ data }) {
     const xAxis = d3.axisBottom(xScale)
       .ticks(5)
       .tickSize(-innerHeight)
-      .tickFormat(d => d >= 1000000 ? (d/1000000).toFixed(1) + 'M' : d);
+      .tickFormat(d => formatRupiah(d));
 
     const yAxis = d3.axisLeft(yScale)
       .ticks(5)

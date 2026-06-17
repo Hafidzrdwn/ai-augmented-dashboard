@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { askCustomQuestion } from '../../services/aiService';
 import { runAnomalyEngine } from '../../utils/anomalyEngine';
+import { buildCompressedChatbotContext, parseMarkdownToReact } from '../../utils/dataUtils';
 
 const isQuestionOnTopic = (q) => {
   const query = q.toLowerCase();
@@ -26,7 +27,7 @@ const isQuestionOnTopic = (q) => {
 };
 
 export default function CustomQuestionChat() {
-  const { summaryStats, filteredData, rawData, regionFilter, zScoreThreshold, momThreshold } = useDashboard();
+  const { filteredData, rawData, regionFilter, zScoreThreshold, momThreshold } = useDashboard();
   
   const [messages, setMessages] = useState([
     { role: 'ai', text: 'Halo. Ada pertanyaan spesifik tentang data di atas? Tanyakan pada saya.' }
@@ -83,11 +84,13 @@ export default function CustomQuestionChat() {
     setMessages(prev => [...prev, { role: 'ai', text: '', isStreaming: true }]);
 
     const anomalies = runAnomalyEngine(filteredData, rawData, zScoreThreshold, momThreshold);
-    const contextData = { summaryStats, anomalies, regionFilter };
+    const compressedContext = buildCompressedChatbotContext(filteredData, anomalies);
+    const activeFilters = { region: regionFilter, zScore: zScoreThreshold, mom: momThreshold };
 
     await askCustomQuestion(
       questionText,
-      contextData,
+      compressedContext,
+      activeFilters,
       (chunk, full) => {
         setMessages(prev => {
           const newMsgs = [...prev];
@@ -149,7 +152,7 @@ export default function CustomQuestionChat() {
                     : 'bg-slate-100 text-slate-800 rounded-bl-none border border-slate-200'
               } ${msg.isStreaming ? 'cursor-blink' : ''}`}
             >
-              {msg.text ? msg.text : msg.isStreaming ? (
+              {msg.text ? parseMarkdownToReact(msg.text) : msg.isStreaming ? (
                 <div className="flex items-center gap-1.5 py-1">
                   <span className="text-xs text-slate-400 font-mono italic mr-1">Berpikir</span>
                   <span className="dot-bounce bg-blue-600" style={{ animationDelay: '0ms' }} />

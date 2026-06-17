@@ -1,3 +1,4 @@
+import React from 'react';
 import * as d3 from 'd3';
 
 export function parseSalesData(csvString) {
@@ -132,8 +133,20 @@ export function calcMoMStats(data) {
   if (monthly.length < 2) {
     return { current: calcSummaryStats(data), previous: null, months: [] };
   }
-  var curr = monthly[monthly.length - 1];
-  var prev = monthly[monthly.length - 2];
+
+  var last = monthly[monthly.length - 1];
+  var secondLast = monthly[monthly.length - 2];
+
+  var isLastIncomplete = secondLast.revenue > 0 && last.revenue < secondLast.revenue * 0.10;
+
+  var curr, prev;
+  if (isLastIncomplete && monthly.length >= 3) {
+    curr = secondLast;
+    prev = monthly[monthly.length - 3];
+  } else {
+    curr = last;
+    prev = secondLast;
+  }
 
   var currData = data.filter(function(d) { return d.month === curr.month; });
   var prevData = data.filter(function(d) { return d.month === prev.month; });
@@ -161,3 +174,143 @@ export function formatRupiah(value) {
 export function formatPct(value) {
   return (value * 100).toFixed(1).replace('.', ',') + '%';
 }
+
+export function buildCompressedChatbotContext(filteredData, anomalies) {
+  var stats = calcSummaryStats(filteredData);
+  
+  var catProfitMap = {};
+  var catSalesMap = {};
+  groupByCategory(filteredData).forEach(function(cat) {
+    catProfitMap[cat.category] = Math.round(cat.profit);
+    catSalesMap[cat.category] = Math.round(cat.revenue);
+  });
+
+  var regionProfitMap = {};
+  var regionSalesMap = {};
+  groupByRegion(filteredData).forEach(function(reg) {
+    regionProfitMap[reg.region] = Math.round(reg.profit);
+    regionSalesMap[reg.region] = Math.round(reg.revenue);
+  });
+
+  var segmentProfitMap = {};
+  var segmentSalesMap = {};
+  filteredData.forEach(function(d) {
+    if (d.segment) {
+      segmentProfitMap[d.segment] = (segmentProfitMap[d.segment] || 0) + d.profit;
+      segmentSalesMap[d.segment] = (segmentSalesMap[d.segment] || 0) + d.revenue;
+    }
+  });
+
+  Object.keys(segmentProfitMap).forEach(function(k) {
+    segmentProfitMap[k] = Math.round(segmentProfitMap[k]);
+    segmentSalesMap[k] = Math.round(segmentSalesMap[k]);
+  });
+
+  var cityDataMap = {};
+  filteredData.forEach(function(d) {
+    if (d.city) {
+      if (!cityDataMap[d.city]) {
+        cityDataMap[d.city] = { city: d.city, sales: 0, profit: 0 };
+      }
+      cityDataMap[d.city].sales += d.revenue;
+      cityDataMap[d.city].profit += d.profit;
+    }
+  });
+
+  var sortedCities = Object.values(cityDataMap)
+    .sort(function(a, b) { return b.sales - a.sales; })
+    .slice(0, 5)
+    .map(function(c) {
+      return {
+        city: c.city,
+        sales: Math.round(c.sales),
+        profit: Math.round(c.profit),
+      };
+    });
+
+  var slimAnomalies = (anomalies || []).map(function(anom) {
+    return {
+      label: anom.label,
+      detail: anom.detail,
+    };
+  });
+
+  return {
+    kpis: {
+      totalSales: Math.round(stats.totalRevenue),
+      totalProfit: Math.round(stats.totalProfit),
+      totalUnits: stats.totalUnits,
+      avgDiscountPercentage: parseFloat((stats.avgDiscount * 100).toFixed(1)),
+      discountedTransactionsRatio: parseFloat((stats.discountedRatio * 100).toFixed(1)),
+      profitMarginPercentage: parseFloat((stats.profitMargin * 100).toFixed(1)),
+    },
+    salesByCategory: catSalesMap,
+    profitByCategory: catProfitMap,
+    salesByRegion: regionSalesMap,
+    profitByRegion: regionProfitMap,
+    salesBySegment: segmentSalesMap,
+    profitBySegment: segmentProfitMap,
+    top5Cities: sortedCities,
+    anomalies: slimAnomalies,
+  };
+}
+
+export function parseMarkdownToReact(text) {
+  if (!text) return null;
+  var lines = text.split('\n');
+  var elements = [];
+  var listBuffer = [];
+
+  var flushList = function(key) {
+    if (listBuffer.length > 0) {
+      elements.push(React.createElement('ul', { key: 'list-' + key, className: 'list-disc ml-6 my-2 space-y-1' }, listBuffer));
+      listBuffer = [];
+    }
+  };
+
+  lines.forEach(function(line, idx) {
+    var trimmed = line.trim();
+    var isBullet = trimmed.startsWith('- ') || trimmed.startsWith('* ');
+
+    if (!isBullet) {
+      flushList(idx);
+    }
+
+    var content = isBullet ? trimmed.replace(/^[\-\*]\s+/, '') : line;
+
+    var parts = [];
+    var regex = /(\*\*.*?\*\*|\*.*?\*)/g;
+    var lastIndex = 0;
+    var match;
+
+    while ((match = regex.exec(content)) !== null) {
+      var matchIndex = match.index;
+      if (matchIndex > lastIndex) {
+        parts.push(content.substring(lastIndex, matchIndex));
+      }
+      var matchedStr = match[0];
+      if (matchedStr.startsWith('**') && matchedStr.endsWith('**')) {
+        parts.push(React.createElement('strong', { key: 'b-' + matchIndex, className: 'font-bold' }, matchedStr.slice(2, -2)));
+      } else if (matchedStr.startsWith('*') && matchedStr.endsWith('*')) {
+        parts.push(React.createElement('em', { key: 'i-' + matchIndex, className: 'italic' }, matchedStr.slice(1, -1)));
+      }
+      lastIndex = regex.lastIndex;
+    }
+    if (lastIndex < content.length) {
+      parts.push(content.substring(lastIndex));
+    }
+
+    if (isBullet) {
+      listBuffer.push(React.createElement('li', { key: 'li-' + idx, className: 'pl-1' }, parts));
+    } else if (trimmed === '') {
+      elements.push(React.createElement('div', { key: 'br-' + idx, className: 'h-2' }));
+    } else {
+      elements.push(React.createElement('p', { key: 'p-' + idx, className: 'm-0 mb-2 leading-relaxed' }, parts));
+    }
+  });
+
+  flushList('end');
+  return elements;
+}
+
+

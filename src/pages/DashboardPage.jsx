@@ -73,9 +73,16 @@ export default function DashboardPage() {
     summaryStats, 
     rawData, 
     zScoreThreshold, 
-    momThreshold 
+    momThreshold,
+    regionFilter
   } = useDashboard();
   const [headline, setHeadline] = useState('');
+
+  const activeFilters = useMemo(() => ({
+    region: regionFilter,
+    zScore: zScoreThreshold,
+    mom: momThreshold
+  }), [regionFilter, zScoreThreshold, momThreshold]);
 
   useEffect(() => {
     if (!summaryStats) return;
@@ -83,11 +90,13 @@ export default function DashboardPage() {
     setHeadline(''); 
     getDynamicDashboardTitle(
       summaryStats,
+      activeFilters,
       (text) => { if (isMounted) setHeadline(text.replace(/^["']+|["']+$/g, '')); },
       (err) => console.error('Headline generation failed:', err)
     );
     return () => { isMounted = false; };
-  }, [summaryStats]);
+  }, [summaryStats, activeFilters]);
+
 
   const fallbackTitle = useMemo(() => {
     if (!summaryStats || summaryStats.totalRevenue === 0) {

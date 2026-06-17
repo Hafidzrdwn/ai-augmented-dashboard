@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { runAnomalyEngine } from '../../utils/anomalyEngine';
 import { narrateAlert, summarizeAnomalies } from '../../services/aiService';
+import { parseMarkdownToReact } from '../../utils/dataUtils';
 
 const TYPE_LABEL = {
   point:      'Z-SKOR',
@@ -12,6 +13,7 @@ const TYPE_LABEL = {
 const PREVIEW_COUNT = 12;
 
 function AlertRow({ anomaly }) {
+  const { regionFilter, zScoreThreshold, momThreshold } = useDashboard();
   const [expanded, setExpanded] = useState(false);
   const [narrative, setNarrative] = useState('');
   const [loading, setLoading]     = useState(false);
@@ -25,12 +27,13 @@ function AlertRow({ anomaly }) {
       setError(null);
       await narrateAlert(
         anomaly,
+        { region: regionFilter, zScore: zScoreThreshold, mom: momThreshold },
         function onChunk(delta, full) { setNarrative(full); },
         function onComplete(full) { setNarrative(full); setLoading(false); },
         function onError(msg) { setError(msg); setLoading(false); },
       );
     }
-  }, [expanded, narrative, loading, anomaly]);
+  }, [expanded, narrative, loading, anomaly, regionFilter, zScoreThreshold, momThreshold]);
 
   const isHigh = anomaly.severity === 'high';
   const borderClass = isHigh ? 'border-l-4 border-red-500' : 'border-l-4 border-orange-500';
@@ -90,9 +93,9 @@ function AlertRow({ anomaly }) {
             {error ? (
               <p className="text-xs text-red-500">{error}</p>
             ) : narrative ? (
-              <p className={`text-sm text-slate-700 leading-relaxed font-sans ${loading ? 'cursor-blink' : ''}`}>
-                {narrative}
-              </p>
+              <div className={`text-sm text-slate-700 leading-relaxed font-sans ${loading ? 'cursor-blink' : ''}`}>
+                {parseMarkdownToReact(narrative)}
+              </div>
             ) : (
               <div className="flex items-center gap-1.5 py-1">
                 <span className="text-xs text-slate-400 font-mono italic">AI sedang memformulasikan rekomendasi</span>
@@ -109,6 +112,7 @@ function AlertRow({ anomaly }) {
 }
 
 function AnomalySummaryPanel({ anomalies }) {
+  const { regionFilter, zScoreThreshold, momThreshold } = useDashboard();
   const [summary, setSummary] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -122,11 +126,12 @@ function AnomalySummaryPanel({ anomalies }) {
     setError(null);
     summarizeAnomalies(
       anomalies,
+      { region: regionFilter, zScore: zScoreThreshold, mom: momThreshold },
       (chunk, full) => setSummary(full),
       (full) => { setSummary(full); setLoading(false); },
       (err) => { setError(err); setLoading(false); }
     );
-  }, [anomalies]);
+  }, [anomalies, regionFilter, zScoreThreshold, momThreshold]);
 
   return (
     <div className="p-6 space-y-4">
@@ -139,9 +144,9 @@ function AnomalySummaryPanel({ anomalies }) {
           <p className="text-red-500 font-medium">{error}</p>
         ) : (
           <div className={loading ? 'cursor-blink' : ''}>
-              {summary ? (
-                <p className="whitespace-pre-wrap">{summary}</p>
-              ) : (
+               {summary ? (
+                 <div className="whitespace-pre-wrap">{parseMarkdownToReact(summary)}</div>
+               ) : (
                 <div className="flex items-center gap-1.5 py-1">
                   <span className="text-xs text-slate-400 font-mono italic">AI sedang merangkum temuan anomali</span>
                   <span className="dot-bounce bg-red-600" style={{ animationDelay: '0ms' }} />

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDashboard } from '../../context/DashboardContext';
 import { generateExecutiveSummary } from '../../services/aiService';
 import { runAnomalyEngine } from '../../utils/anomalyEngine';
+import { parseMarkdownToReact } from '../../utils/dataUtils';
 
 export default function AiExecutiveSummary() {
   const { summaryStats, filteredData, rawData, regionFilter, zScoreThreshold, momThreshold } = useDashboard();
@@ -22,7 +23,7 @@ export default function AiExecutiveSummary() {
     generateExecutiveSummary(
       summaryStats,
       anomalies,
-      regionFilter,
+      { region: regionFilter, zScore: zScoreThreshold, mom: momThreshold },
       (chunk, full) => { if (isMounted) setSummary(full); },
       (full) => { if (isMounted) { setSummary(full); setLoading(false); } },
       (errMsg) => { if (isMounted) { setError(errMsg); setLoading(false); } }
@@ -30,19 +31,6 @@ export default function AiExecutiveSummary() {
 
     return () => { isMounted = false; };
   }, [summaryStats, filteredData, rawData, regionFilter, zScoreThreshold, momThreshold]);
-
-  const formattedSummary = summary.split('\n').map((line, i) => {
-    if (line.trim().startsWith('- ')) {
-      return (
-        <li key={i} className="mb-2 pl-1 relative">
-          <span className="absolute left-[-16px] text-blue-600 font-bold">•</span>
-          {line.replace(/^- /, '')}
-        </li>
-      );
-    }
-    if (line.trim() === '') return <br key={i} />;
-    return <p key={i} className="mb-2">{line}</p>;
-  });
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-5 shadow-sm">
@@ -61,9 +49,7 @@ export default function AiExecutiveSummary() {
         ) : (
           <div className={loading ? 'cursor-blink' : ''}>
             {summary ? (
-              <ul className="list-none ml-4 m-0 p-0">
-                {formattedSummary}
-              </ul>
+              parseMarkdownToReact(summary)
             ) : (
               <div className="flex items-center gap-1.5 py-1">
                 <span className="text-xs text-slate-400 font-mono italic">AI sedang menganalisis performa bisnis</span>

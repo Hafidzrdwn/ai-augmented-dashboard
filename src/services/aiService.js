@@ -35,50 +35,47 @@ function getClient() {
 // and written in Indonesian for consistent UX.
 // ─────────────────────────────────────────
 
-/**
- * PROMPT_EXECUTIVE
- * Used for the top-level executive summary of the entire dashboard.
- * Persona: CFO-level strategic thinker.
- */
-export const PROMPT_EXECUTIVE = `
-Kamu adalah Chief Financial Officer (CFO) di perusahaan distribusi multinasional.
-Kamu menerima ringkasan KPI dan daftar anomali dari dashboard penjualan.
-Tugasmu adalah menghasilkan ringkasan eksekutif yang langsung bisa dibaca oleh CEO.
+export const SYSTEM_PROMPTS = {
+  TITLE: `Kamu adalah Copywriter Data Senior. Buat 1 kalimat headline deklaratif (maks 12 kata) yang menyimpulkan performa utama dari data agregat yang diberikan. Jika profit negatif, gunakan nada waspada. Jika positif, gunakan nada pencapaian. Dilarang menggunakan titik di akhir kalimat. Bahasa Indonesia formal.
+ATURAN FORMAT ANGKA (WAJIB DIIKUTI):
+- WAJIB menuliskan angka nominal uang, persentase, dan statistik dalam bentuk angka digital/kuantitatif (contoh: "Rp 1,3 Jt", "Rp 450 Rb", "12,5%", "100 unit").
+- DILARANG keras mengeja angka menjadi kata-kata (contoh: JANGAN menulis "satu koma tiga juta rupiah" atau "dua belas persen").
+ATURAN OUTPUT BERSIH (WAJIB DIIKUTI):
+- DILARANG keras menampilkan proses berpikir (thinking process), catatan pengecekan aturan (rule checklist), teks draf internal, atau kata-kata transisi evaluasi (seperti "Checked:", "Final Polish:", "Step:", dll.). Hasil output yang Anda berikan harus LANGSUNG berupa teks headline final.`,
+  
+  EXECUTIVE: `Kamu adalah VP of Data Analytics. Berdasarkan ringkasan data agregat dan status filter saat ini, berikan 3 poin Ringkasan Eksekutif. 
+ATURAN:
+1. Poin 1: Observasi utama (Fakta).
+2. Poin 2: Temuan anomali/risiko paling kritis.
+3. Poin 3: Rekomendasi aksi taktis jangka pendek.
+Gunakan bullet points tanpa awalan kata pengantar. Dilarang keras berhalusinasi atau menyebut metrik yang tidak ada dalam data.
+ATURAN FORMAT ANGKA (WAJIB DIIKUTI):
+- WAJIB menuliskan angka nominal uang, persentase, dan statistik dalam bentuk angka digital/kuantitatif (contoh: "Rp 1,3 Jt", "Rp 450 Rb", "12,5%", "100 unit").
+- DILARANG keras mengeja angka menjadi kata-kata (contoh: JANGAN menulis "satu koma tiga juta rupiah" atau "dua belas persen").
+ATURAN OUTPUT BERSIH (WAJIB DIIKUTI):
+- DILARANG keras menampilkan proses berpikir (thinking process), catatan pengecekan aturan (rule checklist), teks draf internal, atau kata-kata transisi evaluasi (seperti "Checked:", "Final Polish:", "Step:", dll.). Hasil output yang Anda berikan harus LANGSUNG berupa 3 poin ringkasan eksekutif.`,
+  
+  CHART: `Kamu adalah Analis Data Eksekutif. Diberikan data spesifik untuk satu grafik dan filter aktif.
+Tugas: Buat 1 paragraf singkat (maks 2 kalimat) berisi insight paling tajam, dan 1 kalimat rekomendasi spesifik. Jangan mendeskripsikan ulang chart-nya, berikan makna (SO WHAT) dari chart tersebut.
+ATURAN FORMAT ANGKA (WAJIB DIIKUTI):
+- WAJIB menuliskan angka nominal uang, persentase, dan statistik dalam bentuk angka digital/kuantitatif (contoh: "Rp 1,3 Jt", "Rp 450 Rb", "12,5%", "100 unit").
+- DILARANG keras mengeja angka menjadi kata-kata (contoh: JANGAN menulis "satu koma tiga juta rupiah" atau "dua belas persen").
+ATURAN OUTPUT BERSIH (WAJIB DIIKUTI):
+- DILARANG keras menampilkan proses berpikir (thinking process), catatan pengecekan aturan (rule checklist), teks draf internal, atau kata-kata transisi evaluasi (seperti "Checked:", "Final Polish:", "Step:", dll.). Hasil output yang Anda berikan harus LANGSUNG berupa paragraf insight dan rekomendasi.`,
 
-ATURAN OUTPUT (WAJIB DIIKUTI):
-- Bahasa Indonesia formal, nada tegas dan percaya diri.
-- WAJIB gunakan struktur berikut secara persis:
-  1. Paragraf pembuka 1-2 kalimat (kondisi saat ini).
-  2. Tepat 3 poin bullet yang sangat bisa ditindaklanjuti (actionable) bertanda '- '.
-- Maksimal 220 kata total.
-- JANGAN gunakan emoji.
-- JANGAN beri pengantar seperti "Berdasarkan data..." — langsung ke substansi.
-`.trim();
+  CHATBOT: `Kamu adalah AI Assistant eksklusif untuk Dashboard Penjualan Superstore. 
+TUGAS UTAMA: Menjawab pertanyaan user HANYA berdasarkan konteks data JSON terkompresi yang dilampirkan.
+ATURAN WAJIB:
+1. Jika ditanya spesifik (contoh: "Provinsi mana profit terendah?"), cari di bagian data region/provinsi dari konteks JSON dan jawab spesifik angkanya.
+2. Jika informasi tidak ada di konteks JSON, jawab: "Maaf, data tersebut tidak tersedia pada cakupan filter saat ini." DILARANG MENGARANG JAWABAN.
+3. Format jawaban: Gunakan paragraf sangat pendek (maks 2 kalimat) atau bullet points agar mudah dibaca di UI yang kecil. Jangan berikan "wall of text".
+ATURAN FORMAT ANGKA (WAJIB DIIKUTI):
+- WAJIB menuliskan angka nominal uang, persentase, dan statistik dalam bentuk angka digital/kuantitatif (contoh: "Rp 1,3 Jt", "Rp 450 Rb", "12,5%", "100 unit").
+- DILARANG keras mengeja angka menjadi kata-kata (contoh: JANGAN menulis "satu koma tiga juta rupiah" atau "dua belas persen").
+ATURAN OUTPUT BERSIH (WAJIB DIIKUTI):
+- DILARANG keras menampilkan proses berpikir (thinking process), catatan pengecekan aturan (rule checklist), teks draf internal, atau kata-kata transisi evaluasi (seperti "Checked:", "Final Polish:", "Step:", dll.). Hasil output yang Anda berikan harus LANGSUNG berupa teks jawaban final.`
+};
 
-/**
- * PROMPT_CHART_TITLE
- * Used to generate a 1-sentence declarative title for a chart.
- * The title should state the key insight, not describe the chart type.
- */
-export const PROMPT_CHART_TITLE = `
-Kamu adalah editor senior di media bisnis nasional.
-Tugasmu adalah menulis judul chart yang informatif dan provokatif.
-
-ATURAN OUTPUT (WAJIB DIIKUTI):
-- Tepat 1 kalimat. Tidak lebih.
-- Judul harus DEKLARATIF — menyatakan temuan, bukan mendeskripsikan jenis chart.
-- Contoh BURUK: "Grafik Revenue per Bulan" (deskriptif, tidak informatif).
-- Contoh BAGUS: "Revenue Bikes Mendominasi 72% Total Penjualan Sepanjang 2023" (deklaratif, mengandung angka).
-- Gunakan angka konkret dari data yang diberikan.
-- Bahasa Indonesia formal. Maksimal 15 kata. Tanpa tanda kutip di output.
-- JANGAN tambahkan penjelasan apapun selain judul itu sendiri.
-`.trim();
-
-/**
- * PROMPT_ALERT
- * Used when user expands an anomaly to get a corrective action narrative.
- * Persona: Risk analyst with domain expertise.
- */
 export const PROMPT_ALERT = `
 Kamu adalah analis risiko bisnis dengan spesialisasi deteksi anomali penjualan.
 Kamu menerima satu anomali spesifik dan harus menghasilkan narasi tindakan korektif yang presisi.
@@ -88,47 +85,11 @@ ATURAN OUTPUT (WAJIB DIIKUTI):
 - Kalimat pertama: jelaskan dampak bisnis dari anomali ini secara konkret (gunakan angka jika tersedia).
 - Kalimat kedua: rekomendasikan satu tindakan spesifik yang bisa diambil minggu ini.
 - Bahasa Indonesia formal. Tanpa emoji, tanpa markdown.
+- WAJIB menuliskan angka nominal uang, persentase, dan statistik dalam bentuk angka digital/kuantitatif (contoh: "Rp 1,3 Jt", "Rp 450 Rb", "12,5%", "100 unit").
+- DILARANG keras mengeja angka menjadi kata-kata (contoh: JANGAN menulis "satu koma tiga juta rupiah" atau "dua belas persen").
+- DILARANG keras menampilkan proses berpikir (thinking process), catatan pengecekan aturan (rule checklist), teks draf internal, atau kata-kata transisi evaluasi (seperti "Checked:", "Final Polish:", "Step:", dll.). Hasil output yang Anda berikan harus LANGSUNG berupa teks narasi rekomendasi 2 kalimat saja.
 `.trim();
 
-/**
- * PROMPT_CHATBOT
- * Used for the interactive chatbot where users ask free-form questions.
- * Persona: Senior data analyst who is helpful but concise.
- */
-export const PROMPT_CHATBOT = `
-Kamu adalah Senior Data Analyst di departemen Business Intelligence.
-User sedang melihat dashboard penjualan dan mengajukan pertanyaan tentang data mereka.
-Kamu diberi konteks berupa ringkasan KPI, daftar anomali aktif, dan filter yang sedang diterapkan.
-
-ATURAN SECURITY & CAKUPAN (WAJIB DIIKUTI):
-- Kamu HANYA boleh menjawab pertanyaan yang berkaitan dengan data bisnis, penjualan, profit, margin, unit terjual, wilayah, kategori produk, diskon, dan anomali pada dashboard ini.
-- Jika user menanyakan hal umum di luar cakupan data dashboard (misal: coding/pemrograman, resep makanan, fakta sejarah, obrolan santai umum, sains, matematika murni, dll.), kamu WAJIB membalas dengan pesan bijak berikut: "Maaf, sebagai analis data bisnis Anda, saya hanya dapat membantu menjawab pertanyaan terkait performa penjualan, profitabilitas, anomali, dan visualisasi data yang tertera pada dasbor ini. Silakan ajukan pertanyaan yang relevan."
-
-ATURAN OUTPUT (WAJIB DIIKUTI):
-- Bahasa Indonesia formal namun ramah.
-- Jawab dengan narasi padat, BUKAN bullet points atau daftar.
-- Jika pertanyaan membutuhkan angka, sebutkan angka konkret dari konteks yang diberikan.
-- Maksimal 150 kata.
-- JANGAN gunakan emoji atau markdown.
-- Langsung jawab tanpa pengantar basa-basi.
-`.trim();
-
-/**
- * PROMPT_CHART (for chart-specific insight)
- * Persona: VP Sales with 15 years experience.
- */
-const PROMPT_CHART = `
-Kamu adalah VP Sales Senior di perusahaan distribusi nasional dengan pengalaman 15 tahun.
-Tugas kamu adalah menganalisis data penjualan yang diberikan dan memberikan insight yang tajam, spesifik, dan bisa langsung ditindaklanjuti.
-
-ATURAN OUTPUT (WAJIB DIIKUTI):
-- Gunakan bahasa Indonesia yang formal namun ringkas.
-- JANGAN gunakan emoji, bullet points, atau formatting markdown.
-- Output harus berupa 2-3 paragraf narasi padat, bukan daftar.
-- Fokus pada: APA yang terjadi, MENGAPA kemungkinan terjadi, dan APA yang harus dilakukan.
-- Maksimal 180 kata.
-- Jangan beri pengantar seperti "Berdasarkan data..." — langsung ke poinnya.
-`.trim();
 
 // ─────────────────────────────────────────
 // STREAMING HELPER
@@ -217,6 +178,17 @@ function simulateStreaming(text, onChunk, onComplete) {
 }
 
 // ─────────────────────────────────────────
+// FILTER STATUS HELPER
+// ─────────────────────────────────────────
+function getFilterHeader(activeFilters) {
+  var filters = activeFilters || { region: 'All', zScore: 1.5, mom: 25 };
+  var region = filters.region || 'All';
+  var zScore = filters.zScore !== undefined ? filters.zScore : 1.5;
+  var mom = filters.mom !== undefined ? filters.mom : 25;
+  return "STATUS FILTER SAAT INI: Wilayah = " + region + ", Ambang Z-Score = " + zScore + ", Ambang MoM = " + mom + "%. JANGAN membahas data di luar filter ini.";
+}
+
+// ─────────────────────────────────────────
 // PUBLIC API — CHART INSIGHT
 // Called by the "Analisis Chart Ini" button on each chart card.
 // ─────────────────────────────────────────
@@ -225,12 +197,15 @@ function simulateStreaming(text, onChunk, onComplete) {
  * Get AI insight for a specific chart.
  * @param {Object} chartData - Aggregated chart data (small, pre-computed)
  * @param {string} chartTitle - Declarative title of the chart
+ * @param {Object} activeFilters - Current active filters
  * @param {Function} onChunk - Called with (deltaText, fullTextSoFar)
  * @param {Function} onComplete - Called with final full text
  * @param {Function} onError - Called with error message string
  */
-export async function getChartInsight(chartData, chartTitle, onChunk, onComplete, onError) {
+export async function getChartInsight(chartData, chartTitle, activeFilters, onChunk, onComplete, onError) {
+  var filterText = getFilterHeader(activeFilters);
   const userMessage = [
+    filterText,
     'Judul chart: "' + chartTitle + '"',
     'Data agregat:',
     JSON.stringify(chartData, null, 2),
@@ -239,8 +214,8 @@ export async function getChartInsight(chartData, chartTitle, onChunk, onComplete
   ].join('\n');
 
   return cachedStream({
-    cacheKey: { chartTitle, chartData },
-    systemPrompt: PROMPT_CHART,
+    cacheKey: { chartTitle, chartData, activeFilters },
+    systemPrompt: SYSTEM_PROMPTS.CHART,
     userMessage,
     onChunk,
     onComplete,
@@ -257,12 +232,15 @@ export async function getChartInsight(chartData, chartTitle, onChunk, onComplete
 /**
  * Generate a 2-sentence narrative for a specific anomaly.
  * @param {Object} anomaly - Anomaly object from anomalyEngine
+ * @param {Object} activeFilters - Current active filters
  * @param {Function} onChunk
  * @param {Function} onComplete
  * @param {Function} onError
  */
-export async function narrateAlert(anomaly, onChunk, onComplete, onError) {
+export async function narrateAlert(anomaly, activeFilters, onChunk, onComplete, onError) {
+  var filterText = getFilterHeader(activeFilters);
   const userMessage = [
+    filterText,
     'Anomali terdeteksi:',
     '- Tipe: ' + anomaly.type,
     '- Label: ' + anomaly.label,
@@ -274,7 +252,7 @@ export async function narrateAlert(anomaly, onChunk, onComplete, onError) {
   ].join('\n');
 
   return cachedStream({
-    cacheKey: { type: 'alert_narrative', anomalyId: anomaly.id },
+    cacheKey: { type: 'alert_narrative', anomalyId: anomaly.id, activeFilters },
     systemPrompt: PROMPT_ALERT,
     userMessage,
     onChunk,
@@ -293,17 +271,20 @@ export async function narrateAlert(anomaly, onChunk, onComplete, onError) {
  * Generate an executive summary for the entire dashboard.
  * @param {Object} summaryStats 
  * @param {Array} anomalies 
- * @param {string} regionFilter 
+ * @param {Object} activeFilters 
  * @param {Function} onChunk
  * @param {Function} onComplete
  * @param {Function} onError
  */
-export async function generateExecutiveSummary(summaryStats, anomalies, regionFilter, onChunk, onComplete, onError) {
+export async function generateExecutiveSummary(summaryStats, anomalies, activeFilters, onChunk, onComplete, onError) {
+  var filterText = getFilterHeader(activeFilters);
+  var regionFilter = (activeFilters && activeFilters.region) || 'All';
   const topAnomalies = anomalies.slice(0, 5).map(function(a) {
     return '- [' + a.severity.toUpperCase() + '] ' + a.label + ': ' + a.detail;
   }).join('\n');
 
   const userMessage = [
+    filterText,
     'Filter aktif: Region = ' + regionFilter,
     '',
     'KPI Dashboard:',
@@ -320,8 +301,8 @@ export async function generateExecutiveSummary(summaryStats, anomalies, regionFi
   ].join('\n');
 
   return cachedStream({
-    cacheKey: { type: 'executive_summary', regionFilter, stats: summaryStats, anomalyCount: anomalies.length },
-    systemPrompt: PROMPT_EXECUTIVE,
+    cacheKey: { type: 'executive_summary', stats: summaryStats, anomalyCount: anomalies.length, activeFilters },
+    systemPrompt: SYSTEM_PROMPTS.EXECUTIVE,
     userMessage,
     onChunk,
     onComplete,
@@ -338,13 +319,16 @@ export async function generateExecutiveSummary(summaryStats, anomalies, regionFi
 /**
  * Generate a declarative 1-sentence title for the overall dashboard based on global stats.
  * @param {Object} summaryStats - Dashboard summary KPI stats
+ * @param {Object} activeFilters - Current active filters
  * @param {Function} onComplete - Called with the generated title string
  * @param {Function} onError - Called with error message
  */
-export async function getDynamicDashboardTitle(summaryStats, onComplete, onError) {
+export async function getDynamicDashboardTitle(summaryStats, activeFilters, onComplete, onError) {
   const noop = function() {};
+  var filterText = getFilterHeader(activeFilters);
 
   const userMessage = [
+    filterText,
     'Tipe chart: Dashboard Keseluruhan',
     'Data KPI Global:',
     JSON.stringify(summaryStats, null, 2),
@@ -353,8 +337,8 @@ export async function getDynamicDashboardTitle(summaryStats, onComplete, onError
   ].join('\n');
 
   return cachedStream({
-    cacheKey: { type: 'dashboard_headline', stats: summaryStats },
-    systemPrompt: PROMPT_CHART_TITLE,
+    cacheKey: { type: 'dashboard_headline', stats: summaryStats, activeFilters },
+    systemPrompt: SYSTEM_PROMPTS.TITLE,
     userMessage,
     onChunk: noop,
     onComplete,
@@ -367,13 +351,16 @@ export async function getDynamicDashboardTitle(summaryStats, onComplete, onError
  * Generate a declarative 1-sentence title for a chart based on its data.
  * @param {Object} chartData - Aggregated chart data
  * @param {string} chartType - Type hint e.g. "revenue_by_month", "profit_by_category"
+ * @param {Object} activeFilters - Current active filters
  * @param {Function} onComplete - Called with the generated title string
  * @param {Function} onError - Called with error message
  */
-export async function generateDynamicTitle(chartData, chartType, onComplete, onError) {
+export async function generateDynamicTitle(chartData, chartType, activeFilters, onComplete, onError) {
   const noop = function() {};
+  var filterText = getFilterHeader(activeFilters);
 
   const userMessage = [
+    filterText,
     'Tipe chart: ' + chartType,
     'Data:',
     JSON.stringify(chartData, null, 2),
@@ -382,8 +369,8 @@ export async function generateDynamicTitle(chartData, chartType, onComplete, onE
   ].join('\n');
 
   return cachedStream({
-    cacheKey: { type: 'chart_title', chartType, chartData },
-    systemPrompt: PROMPT_CHART_TITLE,
+    cacheKey: { type: 'chart_title', chartType, chartData, activeFilters },
+    systemPrompt: SYSTEM_PROMPTS.TITLE,
     userMessage,
     onChunk: noop,
     onComplete,
@@ -402,39 +389,26 @@ export async function generateDynamicTitle(chartData, chartType, onComplete, onE
  * This is NOT cached — each question is unique.
  *
  * @param {string} question - User's free-form question
- * @param {Object} contextData - { summaryStats, anomalies, regionFilter, topCategories }
+ * @param {Object} contextData - Compressed context data
+ * @param {Object} activeFilters - Current active filters
  * @param {Function} onChunk
  * @param {Function} onComplete
  * @param {Function} onError
  */
-export async function askCustomQuestion(question, contextData, onChunk, onComplete, onError) {
-  var ctx = contextData || {};
-  var stats = ctx.summaryStats || {};
-  var anomalies = ctx.anomalies || [];
-  var region = ctx.regionFilter || 'All';
-
-  var anomalySummary = anomalies.slice(0, 3).map(function(a) {
-    return '- ' + a.label + ': ' + a.detail;
-  }).join('\n');
+export async function askCustomQuestion(question, contextData, activeFilters, onChunk, onComplete, onError) {
+  var filterText = getFilterHeader(activeFilters);
 
   var userMessage = [
-    '=== KONTEKS DASHBOARD ===',
-    'Filter Region: ' + region,
-    'Total Revenue: ' + (stats.totalRevenue || 0).toFixed(0),
-    'Total Profit: ' + (stats.totalProfit || 0).toFixed(0),
-    'Total Unit: ' + (stats.totalUnits || 0),
-    'Profit Margin: ' + ((stats.profitMargin || 0) * 100).toFixed(1) + '%',
-    '',
-    'Anomali Aktif (' + anomalies.length + '):',
-    anomalySummary || '(tidak ada)',
+    filterText,
+    '=== KONTEKS DATA (JSON TERKOMPRESI) ===',
+    JSON.stringify(contextData, null, 2),
     '',
     '=== PERTANYAAN USER ===',
     question,
   ].join('\n');
 
-  // Custom questions are NOT cached — each is unique
   return streamAI({
-    systemPrompt: PROMPT_CHATBOT,
+    systemPrompt: SYSTEM_PROMPTS.CHATBOT,
     userMessage,
     onChunk,
     onComplete,
@@ -442,6 +416,10 @@ export async function askCustomQuestion(question, contextData, onChunk, onComple
     maxTokens: 3000,
   });
 }
+
+// ─────────────────────────────────────────
+// PUBLIC API — ANOMALY SUMMARY
+// ─────────────────────────────────────────
 
 /**
  * PROMPT_ANOMALY_SUMMARY
@@ -458,16 +436,25 @@ ATURAN OUTPUT (WAJIB DIIKUTI):
 - Maksimal 150 kata.
 - JANGAN gunakan bullet points atau penomoran, melainkan gunakan paragraf narasi mengalir yang padat.
 - JANGAN gunakan emoji.
+- WAJIB menuliskan angka nominal uang, persentase, dan statistik dalam bentuk angka digital/kuantitatif (contoh: "Rp 1,3 Jt", "Rp 450 Rb", "12,5%", "100 unit").
+- DILARANG keras mengeja angka menjadi kata-kata (contoh: JANGAN menulis "satu koma tiga juta rupiah" atau "dua belas persen").
+- DILARANG keras menampilkan proses berpikir (thinking process), catatan pengecekan aturan (rule checklist), teks draf internal, atau kata-kata transisi evaluasi (seperti "Checked:", "Final Polish:", "Step:", dll.). Hasil output yang Anda berikan harus LANGSUNG berupa teks laporan naratif final.
 `.trim();
 
 /**
  * Generate an aggregate narrative summary of all active anomalies.
+ * @param {Array} anomalies
+ * @param {Object} activeFilters
+ * @param {Function} onChunk
+ * @param {Function} onComplete
+ * @param {Function} onError
  */
-export async function summarizeAnomalies(anomalies, onChunk, onComplete, onError) {
+export async function summarizeAnomalies(anomalies, activeFilters, onChunk, onComplete, onError) {
   if (!anomalies || !anomalies.length) {
     onComplete("Tidak ada anomali terdeteksi untuk dirangkum.");
     return;
   }
+  var filterText = getFilterHeader(activeFilters);
 
   const topAnomalies = anomalies.slice(0, 10);
 
@@ -476,6 +463,7 @@ export async function summarizeAnomalies(anomalies, onChunk, onComplete, onError
   }).join('\n');
 
   const userMessage = [
+    filterText,
     'Daftar Anomali Aktif:',
     anomalyListText,
     '',
@@ -483,7 +471,7 @@ export async function summarizeAnomalies(anomalies, onChunk, onComplete, onError
   ].join('\n');
 
   return cachedStream({
-    cacheKey: { type: 'anomaly_summary', anomalies: anomalies.map(a => a.id) },
+    cacheKey: { type: 'anomaly_summary', anomalies: anomalies.map(a => a.id), activeFilters },
     systemPrompt: PROMPT_ANOMALY_SUMMARY,
     userMessage,
     onChunk,
@@ -492,3 +480,4 @@ export async function summarizeAnomalies(anomalies, onChunk, onComplete, onError
     maxTokens: 3000,
   });
 }
+
