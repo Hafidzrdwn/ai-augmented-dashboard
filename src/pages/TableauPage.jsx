@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { COLOR } from '../styles/tokens'
 
-const TABLEAU_URL = 'https://public.tableau.com/views/YOUR_VIZ_URL/Sheet1?:showVizHome=no&:embed=true'
+const TABLEAU_URL = 'https://public.tableau.com/views/SalesDashboard_17816566303500/DashboardSales?:showVizHome=no&:embed=true'
 
 export default function TableauPage() {
   return (
